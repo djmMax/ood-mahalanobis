@@ -21,7 +21,7 @@ Weights must be downloaded and placed in `./pre_trained/`:
 ### model: ResNet, in-distribution: CIFAR-10, gpu: 0  ###
 
 # generate adversarially perturbed in-dist data:
-python Generate_Adversarial.py.py --dataset cifar10 --attack all --gpu 0
+python Generate_Adversarial.py --dataset cifar10 --attack all --gpu 0
 
 # generate Mahalanobis scores on in-dist and all out-dist data:
 python Generate_Scores.py --in_data cifar10 --out_data all --gpu 0
