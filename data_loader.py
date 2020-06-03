@@ -97,6 +97,38 @@ def getCIFAR100(batch_size, TF, data_root='/tmp/public_dataset/pytorch', train=T
     return ds
 
 
+def getMALARIA(batch_size, TF, data_root='/tmp/public_dataset/pytorch', train=True, val=True, test=False, **kwargs):
+    data_root = os.path.expanduser(os.path.join(data_root, 'malaria'))
+    #num_workers = kwargs.setdefault('num_workers', 1)
+    kwargs.pop('input_size', None)
+    ds = []
+    if train:
+        train_loader = torch.utils.data.DataLoader(
+            datasets.ImageFolder(
+                root=data_root + '/train',
+                transform=TF),
+            batch_size=batch_size, shuffle=True, **kwargs)
+        ds.append(train_loader)
+
+    if val:
+        test_loader = torch.utils.data.DataLoader(
+            datasets.ImageFolder(
+                root=data_root + '/val',
+                transform=TF),
+            batch_size=batch_size, shuffle=False, **kwargs)
+        ds.append(test_loader)
+
+    if test:
+        test_loader = torch.utils.data.DataLoader(
+            datasets.ImageFolder(
+                root=data_root + '/test',
+                transform=TF),
+            batch_size=batch_size, shuffle=False, **kwargs)
+        ds.append(test_loader)
+    ds = ds[0] if len(ds) == 1 else ds
+    return ds
+
+
 def getTargetDataSet(data_type, batch_size, data_path='./data'):
     """
     loads in-dataset (both a train and test version)
@@ -113,6 +145,9 @@ def getTargetDataSet(data_type, batch_size, data_path='./data'):
             batch_size=batch_size, TF=TRANSFORM, data_root=data_path, num_workers=1)
     elif data_type == 'svhn':
         train_loader, test_loader = getSVHN(
+            batch_size=batch_size, TF=TRANSFORM, data_root=data_path, num_workers=1)
+    elif data_type == 'malaria':
+        train_loader, test_loader = getMALARIA(
             batch_size=batch_size, TF=TRANSFORM, data_root=data_path, num_workers=1)
 
     return train_loader, test_loader

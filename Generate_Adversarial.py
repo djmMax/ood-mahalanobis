@@ -9,6 +9,7 @@ Model: resnet
 import argparse
 import os
 import torch
+import torchvision
 import torch.nn as nn
 import data_loader
 import numpy as np
@@ -17,6 +18,8 @@ import lib.adversary as adversary
 from torch.autograd import Variable
 
 parser = argparse.ArgumentParser()
+parser.add_argument('--model', required=True,
+                    help='resnet | vgg')
 parser.add_argument('--dataset', required=True,
                     help='cifar10 | cifar100 | svhn')
 parser.add_argument('--attack', required=True,
@@ -83,11 +86,21 @@ def main():
     - gpu: gpu index
     """
     # load data
-    num_classes = 100 if args.dataset == 'cifar100' else 10
+    if args.dataset == 'malaria':
+        num_classes = 2
+    elif args.dataset == 'cifar100':
+        num_classes = 100
+    else:
+        num_classes = 10
     _, loader = data_loader.getTargetDataSet(args.dataset, args.batch_size, args.data_path)
 
     # load model
-    model = models.ResNet34(num_c=num_classes)
+    if 'resnet' in args.model: 
+        model = models.ResNet34(num_c=num_classes)
+    if 'vgg' in args.model:
+        model = torchvision.models.vgg19_bn()
+        model.classifier = nn.Linear(1024, num_classes)
+    
     model.load_state_dict(torch.load(NET_PATH, map_location = "cuda:" + str(args.gpu)))
     model.cuda()
 
