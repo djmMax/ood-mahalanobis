@@ -52,7 +52,7 @@ def main():
     NET_PATH = './pre_trained/resnet_' + args.in_data + '.pth'
     SAVE_PATH = './output/scores/resnet_' + args.in_data + '/'
     if not os.path.isdir(SAVE_PATH):
-        os.mkdir(SAVE_PATH)
+        os.makedirs(SAVE_PATH)
 
     engine = MahalanobisGenerator(args.in_data, NET_PATH, SAVE_PATH)
     engine.train()

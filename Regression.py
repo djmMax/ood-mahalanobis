@@ -42,7 +42,7 @@ def main():
     """
     SAVE_PATH = './output/regression/resnet_' + args.in_data + '/' 
     if not os.path.isdir(SAVE_PATH):
-        os.mkdir(SAVE_PATH)
+        os.makedirs(SAVE_PATH)
 
     engine = MahalanobisRegression(args.in_data, SAVE_PATH)
     engine.train(args.train_data)

@@ -37,7 +37,7 @@ torch.cuda.set_device(args.gpu)
 NET_PATH = './pre_trained/resnet_' + args.dataset + '.pth'
 SAVE_PATH = './output/adversarial/resnet_' + args.dataset + '/'
 if not os.path.isdir(SAVE_PATH):
-    os.mkdir(SAVE_PATH)
+    os.makedirs(SAVE_PATH)
 
 ADVERSARIAL = ["fgsm", "deepfool", "bim", "cwl2"]
 # ADVERSARIAL = ["fgsm", "bim"]
