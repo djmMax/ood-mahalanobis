@@ -56,22 +56,26 @@ RANDOM_NOISE_SIZE = {
     'fgsm': {
         'cifar10': 0.25 / 4,
         'cifar100': 0.25 / 8, 
-        'svhn': 0.24 / 4
+        'svhn': 0.24 / 4,
+        'malaria': 0.24 / 4,
     },
     'bim': {
         'cifar10': 0.13 / 2,
         'cifar100': 0.13 / 4, 
-        'svhn': 0.13 / 2
+        'svhn': 0.13 / 2, 
+        'malaria': 0.13 / 2
     },
     'deepfool': {
         'cifar10': 0.25 / 4,
         'cifar100': 0.13 / 4, 
-        'svhn': 0.126
+        'svhn': 0.126, 
+        'malaria': 0.126
     },
     'cwl2': {
         'cifar10': 0.05 / 2,
         'cifar100': 0.05 / 2, 
-        'svhn': 0.05 / 1
+        'svhn': 0.05 / 1, 
+        'malaria': 0.05 / 1
     }
 }
 MIN_PIXEL = -2.42906570435
@@ -96,7 +100,13 @@ def main():
 
     # load model
     if 'resnet' in args.model: 
-        model = models.ResNet34(num_c=num_classes)
+        #model = models.ResNet34(num_c=num_classes)
+        model = torchvision.models.resnet50()
+        num_features = model.fc.in_features
+        features = list(model.fc.children())[:-1] # Remove last layer
+        features.extend([nn.Linear(num_features, num_classes)]) # Add our layer with 2 outputs
+        model.fc = nn.Sequential(*features) 
+
     if 'vgg' in args.model:
         model = torchvision.models.vgg19_bn()
         model.classifier = nn.Linear(1024, num_classes)

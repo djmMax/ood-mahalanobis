@@ -16,6 +16,24 @@ import os
 TRANSFORM = transforms.Compose([transforms.ToTensor(), transforms.Normalize(
     (0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)), ])
 
+# VGG-16 Takes 224x224 images as input, so we resize all of them
+
+
+MALARIA_TRANSFORMS = {
+    'train': transforms.Compose([
+        # Data augmentation is a good practice for the train set
+        # Here, we randomly crop the image to 224x224 and
+        # randomly flip it horizontally. 
+        transforms.RandomResizedCrop(124),
+        transforms.RandomHorizontalFlip(),
+        transforms.ToTensor(),
+    ]),
+    'test': transforms.Compose([
+        transforms.Resize(128),
+        transforms.CenterCrop(124),
+        transforms.ToTensor(),
+    ])
+}
 
 def getSVHN(batch_size, TF, data_root='/tmp/public_dataset/pytorch', train=True, val=True, **kwargs):
     data_root = os.path.expanduser(os.path.join(data_root, 'svhn-data'))
@@ -97,7 +115,7 @@ def getCIFAR100(batch_size, TF, data_root='/tmp/public_dataset/pytorch', train=T
     return ds
 
 
-def getMALARIA(batch_size, TF, data_root='/tmp/public_dataset/pytorch', train=True, val=True, test=False, **kwargs):
+def getMALARIA(batch_size, TF=None, data_root='/tmp/public_dataset/pytorch', train=True, val=True, test=False, **kwargs):
     data_root = os.path.expanduser(os.path.join(data_root, 'malaria'))
     #num_workers = kwargs.setdefault('num_workers', 1)
     kwargs.pop('input_size', None)
@@ -106,7 +124,7 @@ def getMALARIA(batch_size, TF, data_root='/tmp/public_dataset/pytorch', train=Tr
         train_loader = torch.utils.data.DataLoader(
             datasets.ImageFolder(
                 root=data_root + '/train',
-                transform=TF),
+                transform=MALARIA_TRANSFORMS['train']),
             batch_size=batch_size, shuffle=True, **kwargs)
         ds.append(train_loader)
 
@@ -114,7 +132,7 @@ def getMALARIA(batch_size, TF, data_root='/tmp/public_dataset/pytorch', train=Tr
         test_loader = torch.utils.data.DataLoader(
             datasets.ImageFolder(
                 root=data_root + '/val',
-                transform=TF),
+                transform=MALARIA_TRANSFORMS['test']),
             batch_size=batch_size, shuffle=False, **kwargs)
         ds.append(test_loader)
 
@@ -122,7 +140,7 @@ def getMALARIA(batch_size, TF, data_root='/tmp/public_dataset/pytorch', train=Tr
         test_loader = torch.utils.data.DataLoader(
             datasets.ImageFolder(
                 root=data_root + '/test',
-                transform=TF),
+                transform=MALARIA_TRANSFORMS['test']),
             batch_size=batch_size, shuffle=False, **kwargs)
         ds.append(test_loader)
     ds = ds[0] if len(ds) == 1 else ds
@@ -139,16 +157,16 @@ def getTargetDataSet(data_type, batch_size, data_path='./data'):
     """
     if data_type == 'cifar10':
         train_loader, test_loader = getCIFAR10(
-            batch_size=batch_size, TF=TRANSFORM, data_root=data_path, num_workers=1)
+            batch_size=batch_size, TF=TRANSFORM, data_root=data_path, num_workers=4)
     elif data_type == 'cifar100':
         train_loader, test_loader = getCIFAR100(
-            batch_size=batch_size, TF=TRANSFORM, data_root=data_path, num_workers=1)
+            batch_size=batch_size, TF=TRANSFORM, data_root=data_path, num_workers=4)
     elif data_type == 'svhn':
         train_loader, test_loader = getSVHN(
-            batch_size=batch_size, TF=TRANSFORM, data_root=data_path, num_workers=1)
+            batch_size=batch_size, TF=TRANSFORM, data_root=data_path, num_workers=4)
     elif data_type == 'malaria':
         train_loader, test_loader = getMALARIA(
-            batch_size=batch_size, TF=TRANSFORM, data_root=data_path, num_workers=1)
+            batch_size=batch_size, TF=TRANSFORM, data_root=data_path, num_workers=4)
 
     return train_loader, test_loader
 
