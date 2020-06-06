@@ -20,6 +20,8 @@ from torch.autograd import Variable
 torch.cuda.manual_seed(0)
 
 parser = argparse.ArgumentParser()
+parser.add_argument('--model', required=True,
+                    help='resnet18 | densenet121 | vgg16 | vgg19')
 parser.add_argument('--in_data', required=True,
                     help='cifar10 | cifar100 | svhn')
 parser.add_argument('--out_data', required=True,
@@ -49,8 +51,10 @@ def main():
     - gpu: gpu index
     """
     torch.cuda.set_device(args.gpu) 
-    NET_PATH = './pre_trained/resnet_' + args.in_data + '.pth'
-    SAVE_PATH = './output/scores/resnet_' + args.in_data + '/'
+    # NET_PATH = './pre_trained/resnet_' + args.in_data + '.pth'
+    # SAVE_PATH = './output/scores/resnet_' + args.in_data + '/'
+    NET_PATH = './pre_trained' 
+    SAVE_PATH = './output/adversarial' 
     if not os.path.isdir(SAVE_PATH):
         os.makedirs(SAVE_PATH)
 

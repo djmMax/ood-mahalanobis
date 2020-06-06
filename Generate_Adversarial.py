@@ -16,10 +16,12 @@ import numpy as np
 import models
 import lib.adversary as adversary
 from torch.autograd import Variable
+#import tqdm.notebook as tqdm
+import tqdm
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--model', required=True,
-                    help='resnet | vgg')
+                    help='resnet18 | densenet121 | vgg16 | vgg19')
 parser.add_argument('--dataset', required=True,
                     help='cifar10 | cifar100 | svhn')
 parser.add_argument('--attack', required=True,
@@ -34,8 +36,8 @@ print(args)
 
 # constants
 torch.cuda.set_device(args.gpu) 
-NET_PATH = './pre_trained/resnet_' + args.dataset + '.pth'
-SAVE_PATH = './output/adversarial/resnet_' + args.dataset + '/'
+NET_PATH = './pre_trained' 
+SAVE_PATH = './output/adversarial' 
 if not os.path.isdir(SAVE_PATH):
     os.makedirs(SAVE_PATH)
 
@@ -48,7 +50,8 @@ ADV_NOISE = {
     'deepfool': {
         'cifar10': 0.18,
         'cifar100': 0.03, 
-        'svhn': 0.1
+        'svhn': 0.1,
+        'malaria': 0.18
     },
     'cwl2': None
 }
@@ -99,19 +102,32 @@ def main():
     _, loader = data_loader.getTargetDataSet(args.dataset, args.batch_size, args.data_path)
 
     # load model
-    if 'resnet' in args.model: 
-        #model = models.ResNet34(num_c=num_classes)
-        model = torchvision.models.resnet50()
-        num_features = model.fc.in_features
-        features = list(model.fc.children())[:-1] # Remove last layer
-        features.extend([nn.Linear(num_features, num_classes)]) # Add our layer with 2 outputs
-        model.fc = nn.Sequential(*features) 
+    if 'resnet18' in args.model: 
+        model = models.resnet18()
+        model.fc = nn.Linear(in_features=512, out_features=num_classes)
 
-    if 'vgg' in args.model:
-        model = torchvision.models.vgg19_bn()
-        model.classifier = nn.Linear(1024, num_classes)
+    if 'densenet121' in args.model:
+        model = torchvision.models.densenet121()
+        num_features = model.classifier.in_features
+        features = list(model.classifier.children())[:-1]
+        features.extend([nn.Linear(num_features, num_classes)])
+        model.classifier = nn.Sequential(*features)
+
+    if 'vgg16' in args.model:
+        model = models.vgg16()
+        features = list(model.classifier.children())[:-1]
+        features.extend([nn.Linear(num_features, num_classes)])
+        model.classifier = nn.Sequential(*features)
     
-    model.load_state_dict(torch.load(NET_PATH, map_location = "cuda:" + str(args.gpu)))
+    if 'vgg19' in args.model:
+        model = models.model()
+        num_features = model.classifier[6].in_features
+        features = list(model.classifier.children())[:-1]
+        features.extend([nn.Linear(num_features, num_classes)])
+        model.classifier = nn.Sequential(*features)
+    
+    net_path = NET_PATH + '/' + args.model + '_' + args.dataset + '.pth'
+    model.load_state_dict(torch.load(net_path, map_location = "cuda:" + str(args.gpu)))
     model.cuda()
 
     # apply attack
@@ -141,7 +157,7 @@ def applyAttack(attack, model, data_loader, num_classes):
     selected_index = 0
     
     ## ITERATE OVER DATA POINTS ##
-    for data, target in data_loader:
+    for data, target in tqdm.tqdm(data_loader, desc=attack):
         data, target = data.cuda(), target.cuda()
         data, target = Variable(data, volatile=True), Variable(target)
         output = model(data)
@@ -223,10 +239,12 @@ def applyAttack(attack, model, data_loader, num_classes):
     noisy_data_tot = torch.index_select(noisy_data_tot, 0, selected_list)
     label_tot = torch.index_select(label_tot, 0, selected_list)
 
-    torch.save(clean_data_tot, '%s/clean_data_resnet_%s_%s.pth' % (SAVE_PATH, args.dataset, attack))
-    torch.save(adv_data_tot, '%s/adv_data_resnet_%s_%s.pth' % (SAVE_PATH, args.dataset, attack))
-    torch.save(noisy_data_tot, '%s/noisy_data_resnet_%s_%s.pth' % (SAVE_PATH, args.dataset, attack))
-    torch.save(label_tot, '%s/label_resnet_%s_%s.pth' % (SAVE_PATH, args.dataset, attack))
+    save_path = '%s/%s_%s/' % (SAVE_PATH, args.model, args.dataset)
+    os.makedirs(save_path, exist_ok=True)
+    torch.save(clean_data_tot, '%s/clean_data_%s_%s_%s.pth' % (save_path, args.model, args.dataset, attack))
+    torch.save(adv_data_tot, '%s/adv_data_%s_%s_%s.pth' % (save_path, args.model, args.dataset, attack))
+    torch.save(noisy_data_tot, '%s/noisy_data_%s_%s_%s.pth' % (save_path, args.model, args.dataset, attack))
+    torch.save(label_tot, '%s/label_%s_%s_%s.pth' % (save_path, args.model, args.dataset, attack))
 
     print('Adversarial Noise:({:.2f})\n'.format(generated_noise / total))
     print('Final Accuracy: {}/{} ({:.2f}%)\n'.format(correct, total, 100. * correct / total))
