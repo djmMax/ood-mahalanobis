@@ -39,7 +39,7 @@ def main():
     """
     SAVE_PATH = './output/accuracy/resnet_' + args.in_data + '/' 
     if not os.path.isdir(SAVE_PATH):
-        os.mkdir(SAVE_PATH)
+        os.makedirs(SAVE_PATH)
 
     engine = MahalanobisEvaluator(args.in_data, SAVE_PATH)
 
