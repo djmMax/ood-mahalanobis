@@ -13,6 +13,8 @@ from sklearn import metrics
 import os
 
 parser = argparse.ArgumentParser()
+parser.add_argument('--model', required=True,
+                    help='resnet18 | densenet121 | vgg16 | vgg19')
 parser.add_argument('--in_data', required=True,
                     help='cifar10 | cifar100 | svhn')
 parser.add_argument('--out_data', required=True,
@@ -38,6 +40,8 @@ def main():
     - gpu: gpu index
     """
     SAVE_PATH = './output/accuracy/resnet_' + args.in_data + '/' 
+    SAVE_PATH = './output/accuracy/adv_data_resnet_%s_%s.pth' %
+                     (data_type, data_type, attack_type)
     if not os.path.isdir(SAVE_PATH):
         os.makedirs(SAVE_PATH)
 

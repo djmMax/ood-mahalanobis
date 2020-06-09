@@ -20,6 +20,8 @@ from torch.autograd import Variable
 torch.cuda.manual_seed(0)
 
 parser = argparse.ArgumentParser()
+parser.add_argument('--model', required=True,
+                    help='resnet18 | densenet121 | vgg16 | vgg19')
 parser.add_argument('--in_data', required=True,
                     help='cifar10 | cifar100 | svhn')
 parser.add_argument('--out_data', required=True,
@@ -36,7 +38,7 @@ print(args)
 
 ADVERSARIAL = ["fgsm", "deepfool", "bim", "cwl2"]
 # ADVERSARIAL = ["fgsm", "bim"]
-OUT = ["svhn", "cifar10", "cifar100", "imagenet_resize", "lsun_resize"]
+OUT = ["malaria", "malaria2", "svhn", "cifar10", "cifar100", "imagenet_resize", "lsun_resize"]
 
 ### MODIFYING ./output/ -> ./output/scores/ ####
 
@@ -50,8 +52,8 @@ def main():
     - gpu: gpu index
     """
     torch.cuda.set_device(args.gpu) 
-    NET_PATH = './pre_trained/resnet_' + args.in_data + '.pth'
-    SAVE_PATH = './output/scores/resnet_' + args.in_data + '/'
+    NET_PATH = './pre_trained/%s_%s.pth' % (args.model, args.in_data)
+    SAVE_PATH = './output/scores/%s_%s/' % (args.model, args.in_data)
     if not os.path.isdir(SAVE_PATH):
         os.mkdir(SAVE_PATH)
 
@@ -91,7 +93,7 @@ class MahalanobisGenerator:
             self.in_data, self.batch_size, args.data_path)
 
         # load model
-        self.model = models.ResNet34(num_c=self.num_classes)
+        self.model = models.get_model(args.model)
         self.model.load_state_dict(torch.load(net_path, map_location = "cuda:" + str(args.gpu)))
         self.model.cuda()
 
@@ -142,7 +144,7 @@ class MahalanobisGenerator:
             
             # if adversarial, using a list, and for some reason, need to load this continuously
             if adversarial:
-                test_loader = data_loader.getAdversarialDataSet(data, self.in_data, self.batch_size)
+                test_loader = data_loader.getAdversarialDataSet(data, args.model, self.in_data, self.batch_size)
             
             layer_scores = self._get_Mahalanobis_score(data, test_loader, i, test_noise)
             layer_scores = np.expand_dims(layer_scores, axis=1) #N, -> Nx1

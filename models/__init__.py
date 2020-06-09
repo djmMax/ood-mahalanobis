@@ -8,6 +8,8 @@ def get_resnet18():
     model.fc = nn.Linear(in_features=512, out_features=2)
 
     self = model
+
+    # function to extact the multiple features
     def feature_list(x):
         out_list = []
         out = F.relu(self.bn1(self.conv1(x)))
@@ -25,7 +27,27 @@ def get_resnet18():
         y = self.fc(out)
         return y, out_list
     
+    # function to extact a specific feature
+    def intermediate_forward(x, layer_index):
+        out = F.relu(self.bn1(self.conv1(x)))
+        if layer_index == 1:
+            out = self.layer1(out)
+        elif layer_index == 2:
+            out = self.layer1(out)
+            out = self.layer2(out)
+        elif layer_index == 3:
+            out = self.layer1(out)
+            out = self.layer2(out)
+            out = self.layer3(out)
+        elif layer_index == 4:
+            out = self.layer1(out)
+            out = self.layer2(out)
+            out = self.layer3(out)
+            out = self.layer4(out)               
+        return out
+
     model.feature_list = feature_list
+    model.intermediate_forward = intermediate_forward
 
     return model
 

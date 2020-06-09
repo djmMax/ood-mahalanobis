@@ -105,29 +105,7 @@ def main():
     _, loader = data_loader.getTargetDataSet(args.dataset, args.batch_size, args.data_path)
 
     # load model
-    if 'resnet18' in args.model: 
-        model = models.resnet18()
-        model.fc = nn.Linear(in_features=512, out_features=num_classes)
-
-    if 'densenet121' in args.model:
-        model = torchvision.models.densenet121()
-        num_features = model.classifier.in_features
-        features = list(model.classifier.children())[:-1]
-        features.extend([nn.Linear(num_features, num_classes)])
-        model.classifier = nn.Sequential(*features)
-
-    if 'vgg16' in args.model:
-        model = models.vgg16()
-        features = list(model.classifier.children())[:-1]
-        features.extend([nn.Linear(num_features, num_classes)])
-        model.classifier = nn.Sequential(*features)
-    
-    if 'vgg19' in args.model:
-        model = models.model()
-        num_features = model.classifier[6].in_features
-        features = list(model.classifier.children())[:-1]
-        features.extend([nn.Linear(num_features, num_classes)])
-        model.classifier = nn.Sequential(*features)
+    model = models.get_model(args.model)
     
     net_path = NET_PATH + '/' + args.model + '_' + args.dataset + '.pth'
     model.load_state_dict(torch.load(net_path, map_location = "cuda:" + str(args.gpu)))
